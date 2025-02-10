@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Viewport fit=cover for iPhone’s notch, ensures safe-area insets -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Be My Valentine?</title>
+  <!-- Existing fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet" />
+  <!-- Additional fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&display=swap" rel="stylesheet" />
+  <!-- Using Quicksand for a cute look and Space Grotesk for button icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary-color: #ff6b81;
+      --secondary-color: #ffffff;
+      --background-gradient: radial-gradient(circle at top left, #f9c6d5, #d6a4e7, #a18cd1, #fbc2eb);
+
+      /* Updated fonts */
+      --font-sans: "Poppins", sans-serif;
+      --font-ds: "DM Sans", sans-serif;
+      --font-sg: "Quicksand", sans-serif;
+
+      /* Safe area variables for notched screens (iPhones) */
+      --safe-area-inset-top: env(safe-area-inset-top, 20px);
+      --safe-area-inset-right: env(safe-area-inset-right, 20px);
+      --safe-area-inset-bottom: env(safe-area-inset-bottom, 20px);
+      --safe-area-inset-left: env(safe-area-inset-left, 20px);
+
+      /* Colors, transitions, shadows */
+      --pink-50: #ffd6e9;
+      --pink-800: #9d174d;
+      --red-400: #ff4d8d;
+      --gray-700: #555;
+
+      --transition-ease: 0.4s ease-out;
+      --transition-default: all 0.4s ease;
+      --box-shadow-card: 0 5px 20px rgba(0, 0, 0, 0.1);
+      --box-shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.2);
+      --box-shadow-counter: 0 5px 15px rgba(0, 0, 0, 0.1);
+      --box-shadow-larger: 0 15px 35px rgba(0, 0, 0, 0.15);
+      --box-shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.2);
+
+      /* Custom multi-layered shadow for the NO button (for movement logic) */
+      --no-btn-shadow: 
+        0.5px 0.5px 0 0 #000,
+        1px 1px 0 0 #000,
+        1.5px 1.5px 0 0 #000,
+        2px 2px 0 0 #000,
+        2.5px 2.5px 0 0 #000,
+        3px 3px 0 0 #000,
+        0 0 0 2px #ccc,
+        0.5px 0.5px 0 2px #ccc,
+        1px 1px 0 2px #ccc,
+        1.5px 1.5px 0 2px #ccc,
+        2px 2px 0 2px #ccc,
+        2.5px 2.5px 0 2px #ccc,
+        3px 3px 0 2px #ccc,
+        3.5px 3.5px 0 2px #ccc,
+        4px 4px 0 2px #ccc;
+    }
+
+    @keyframes minimalPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    /* Dynamic gradient animation for yay modal inner element */
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Updated Scroll Down Animation:
+       This sequence includes varied twitch motions (fast, slow, double twitch)
+       with a total duration of 3.5s for less frequent motion. */
+    @keyframes scrollPulse {
+      0% { transform: translate(0, 0); box-shadow: 12px 12px 0 #000; }
+      20% { transform: translate(-8px, -8px); box-shadow: 16px 16px 0 #000; }
+      30% { transform: translate(4px, 4px); box-shadow: 10px 10px 0 #000; }
+      40% { transform: translate(-6px, -6px); box-shadow: 14px 14px 0 #000; }
+      50% { transform: translate(0, 0); box-shadow: 12px 12px 0 #000; }
+      100% { transform: translate(0, 0); box-shadow: 12px 12px 0 #000; }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      color: #000;
+      background: var(--background-gradient);
+      min-height: 100vh;
+      padding: var(--safe-area-inset-top) var(--safe-area-inset-right) var(--safe-area-inset-bottom) var(--safe-area-inset-left);
+      overflow-x: hidden;
+    }
+
+    @media (pointer: fine) {
+      body {
+        cursor: none;
+      }
+    }
+
+    /* Mini Heart Element */
+    .heart-icon {
+      width: 24px;
+      height: 24px;
+      color: #ff3366;
+      z-index: 0;
+    }
+    .box-heart { }
+
+    /* Counter Boxes */
+    .time-counter {
+      position: fixed;
+      top: max(var(--safe-area-inset-top), 20px);
+      background: #fff;
+      border: 3px solid #000;
+      border-radius: 16px;
+      box-shadow: 8px 8px 0 #000;
+      padding: 1rem;
+      padding-top: 2.5rem;
+      width: 200px;
+      height: 200px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-align: center;
+      line-height: 1.4;
+      z-index: 1001;
+      font-weight: bold;
+    }
+    .time-counter:hover {
+      transform: translate(-4px, -4px);
+      box-shadow: 12px 12px 0 #000;
+    }
+    .time-counter:active {
+      transform: translate(2px, 2px);
+      box-shadow: 6px 6px 0 #000;
+    }
+    .time-counter .counter-label {
+      font-family: var(--font-ds);
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #f472b6;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+    .time-values {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sg);
+    }
+    .time-values .numbers {
+      display: flex;
+      gap: 10px;
+      font-size: 1.5rem;
+    }
+    .time-values .labels {
+      display: flex;
+      gap: 10px;
+      font-size: 1rem;
+      margin-top: 5px;
+    }
+    .time-values .numbers span,
+    .time-values .labels span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Positioning for Counter Boxes */
+    #dating-counter {
+      right: max(var(--safe-area-inset-right), 20px);
+    }
+    /* Changed label for second counter */
+    #valentine-counter {
+      left: max(var(--safe-area-inset-left), 20px);
+    }
+    #valentine-counter .counter-label {
+      font-family: var(--font-ds);
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #f472b6;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+    /* Change the text in the second counter via JS (see below) */
+
+    @media (pointer: coarse) {
+      .time-counter:hover {
+        transform: none !important;
+        box-shadow: 8px 8px 0 #000 !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .time-counter {
+        position: relative !important;
+        display: block !important;
+        width: 90% !important;
+        height: auto !important;
+        padding: 1rem !important;
+        border: 3px solid #000 !important;
+        border-radius: 16px !important;
+        box-shadow: 8px 8px 0 #000 !important;
+        margin: 30px auto !important;
+        margin-bottom: 30px !important;
+      }
+      #dating-counter,
+      #valentine-counter {
+        left: auto !important;
+        right: auto !important;
+      }
+      .heart-icon {
+        top: 10px;
+        right: 10px;
+        width: 20px;
+        height: 20px;
+      }
+      .buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        min-height: 100px;
+      }
+      .button {
+        font-size: 1.2rem;
+        min-width: 140px;
+        padding: 0.5rem 1rem;
+      }
+    }
+
+    /* Removed dots styling for buttons */
+
+    /* New styling for the yay modal buttons container */
+    .yay-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: auto;
+      padding-top: 20px;
+    }
+    .close-button, .airbnb-button {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      /* AirBnB button now uses same styling as the YES button */
+      background: #f472b6;
+      color: #fff;
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      box-shadow: 4px 4px 0 #000;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .close-button:hover, .airbnb-button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #000;
+    }
+    .close-button:active, .airbnb-button:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 #000;
+    }
+    /* Specific styling for the Return Home button (white background) */
+    #yayModalClose {
+      background: #fff;
+      color: #000;
+    }
+    #yayModalClose:hover, #yayModalClose:active {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #000;
+    }
+
+    /* Tiny 'x' button for the YAY modal,
+       positioned symmetrically just outside the yay-card border */
+    .modal-close-x {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      color: #000;
+      cursor: pointer;
+      z-index: 3;
+      width: 30px;
+      height: 30px;
+      line-height: 26px;
+      text-align: center;
+      /* Hide the 'x' by default */
+      display: none;
+    }
+    .modal-close-x:hover {
+      background: #f472b6;
+      color: #fff;
+    }
+
+    /* Show the 'x' button on mobile only */
+    @media (max-width: 768px) {
+      .modal-close-x {
+        display: block;
+      }
+    }
+
+    /* Funny Message */
+    .funny-message {
+      position: fixed;
+      background-color: white;
+      color: var(--primary-color);
+      padding: 15px 30px;
+      border-radius: 16px;
+      font-size: clamp(1em, 3vw, 1.2em);
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      text-align: center;
+      max-width: 90%;
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+      transition: top var(--transition-ease), left var(--transition-ease), opacity 0.3s;
+    }
+
+    /* Floating Elements */
+    .floating-elements {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+    .floating-element {
+      position: absolute;
+      animation: float linear infinite;
+      opacity: 0.6;
+      font-size: 1.5em;
+      user-select: none;
+    }
+    @keyframes float {
+      0% {
+        transform: translateY(-20px) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.6;
+      }
+      90% {
+        opacity: 0.6;
+      }
+      100% {
+        transform: translateY(105vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* Confetti Container */
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* Custom Cursor */
+    .custom-cursor {
+      position: fixed;
+      color: var(--secondary-color);
+      font-size: 24px;
+      pointer-events: none;
+      /* Increased z-index to ensure the custom cursor is visible over modals */
+      z-index: 9999;
+      background: transparent;
+      border-radius: 16px;
+      box-shadow: none;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+      transition: transform 0.2s ease;
+    }
+    .custom-cursor.hover-yes {
+      transform: scale(1.5);
+    }
+    @media (pointer: coarse) {
+      .custom-cursor {
+        display: none;
+      }
+    }
+
+    /* Gallery Section */
+    .gallery-section {
+      position: relative;
+      width: min(90%, 1000px);
+      margin: 150px auto;
+      padding: 60px;
+      background: #fff;
+      border: 6px solid #000;
+      box-shadow: 12px 12px 0 #000;
+      border-radius: 16px;
+      animation: fadeIn 1.5s ease-in-out;
+      font-family: var(--font-sg);
+    }
+    /* Gallery title changed to Quicksand and black */
+    .gallery-title {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      color: #000;
+      font-size: clamp(2.2em, 6vw, 4em);
+      text-align: center;
+      margin-bottom: 60px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+      position: relative;
+    }
+    /* The decorative line below the title has been removed completely */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      padding: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .gallery-item {
+      position: relative;
+      transform-origin: center;
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: 16px;
+      box-shadow: var(--box-shadow-card);
+      transition: var(--transition-default);
+    }
+    .gallery-item::before {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 130%;
+      background-image: linear-gradient(180deg, rgba(99,102,241,0.8), rgba(168,85,247,0.8), rgba(236,72,153,0.8));
+      filter: blur(20px);
+      top: 0;
+      left: 0;
+      z-index: 1;
+      animation: rotBGimg 8s cubic-bezier(0.8,0.2,0.2,0.8) infinite;
+      transition: opacity 0.4s ease;
+      opacity: 0;
+      border-radius: 16px;
+    }
+    .gallery-item:hover::before {
+      opacity: 1;
+    }
+    @keyframes rotBGimg {
+      0% {
+        transform: rotate(0deg) scale(1);
+      }
+      50% {
+        transform: rotate(180deg) scale(1.2);
+      }
+      100% {
+        transform: rotate(360deg) scale(1);
+      }
+    }
+    .gallery-item::after {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border-radius: 16px;
+      background: #ffffff;
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+      z-index: 2;
+    }
+    .gallery-frame {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      border-radius: 16px;
+    }
+    .glass-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+      border-radius: 16px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .gallery-image {
+      width: 100%;
+      height: calc(100% - 40px);
+      object-fit: cover;
+      border-radius: 16px;
+      transition: var(--transition-default);
+      cursor: pointer;
+    }
+    .gallery-caption {
+      font-family: var(--font-sg);
+      font-weight: 700;
+      color: #000;
+      font-size: clamp(1em, 3vw, 1.2em);
+      text-align: center;
+      margin: 10px auto 0 auto;
+      padding: 0 10px;
+      line-height: 1.4;
+      transition: all 0.3s ease;
+    }
+    /* Gradient effect for the caption text only */
+    .gallery-caption .caption-text {
+      transition: all 0.3s ease;
+    }
+    .gallery-item:hover .gallery-caption .caption-text {
+      background: linear-gradient(90deg, #f472b6, #ff4d8d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    /* No gradient effect for the emoji on hover */
+    .gallery-caption .emoji {
+      transition: all 0.3s ease;
+      background: none !important;
+      -webkit-background-clip: initial;
+      -webkit-text-fill-color: initial;
+    }
+    .gallery-item:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--box-shadow-hover);
+    }
+    .gallery-item:hover .gallery-image {
+      transform: scale(1.05);
+    }
+    .gallery-item:hover .gallery-caption {
+      transform: translateY(-2px);
+    }
+    /* Gallery Modal */
+    .gallery-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1100;
+      justify-content: center;
+      align-items: center;
+      padding: max(var(--safe-area-inset-top), 20px) max(var(--safe-area-inset-right), 20px) max(var(--safe-area-inset-bottom), 20px) max(var(--safe-area-inset-left), 20px);
+    }
+    .gallery-modal-content {
+      max-width: 90%;
+      max-height: 90vh;
+      position: relative;
+    }
+    .gallery-modal-image {
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 16px;
+    }
+    .gallery-modal-caption {
+      color: white;
+      text-align: center;
+      margin-top: 15px;
+      font-family: var(--font-sg);
+      font-size: clamp(1.2em, 3vw, 1.5em);
+    }
+    /* Maintain the 'X' close button for the photo gallery in the modal */
+    .gallery-modal .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 2rem;
+      color: #fff;
+      cursor: pointer;
+      z-index: 1010;
+    }
+
+    /* Main Container */
+    .container {
+      position: relative;
+      width: min(85%, 900px);
+      margin: 150px auto;
+      padding: 50px;
+      background: #fff;
+      border: 6px solid #000;
+      box-shadow: 12px 12px 0 #000;
+      border-radius: 16px;
+      text-align: center;
+      z-index: 2;
+      animation: fadeIn 1.5s ease-in-out;
+      font-family: var(--font-sg);
+    }
+    /* Updated Title and Message: Both use Quicksand with consistent font weight (700) and a proportionate ratio */
+    h1 {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      color: #f472b6;
+      font-size: clamp(2.5em, 8vw, 5em);
+      margin-bottom: 50px;
+      animation: subtleBounce 2s infinite;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+    }
+    .message {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.2em, 4vw, 2em);
+      color: #000;
+      margin-bottom: 50px;
+      line-height: 1.6;
+      animation: slideIn 1s;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
+    }
+
+    /* -------------------- UPDATED BUTTON STYLING -------------------- */
+    .button {
+      position: relative;
+      min-width: 130px;
+      padding: 0.85rem 1.5rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 1.125rem;
+      border: 4px solid #000;
+      border-radius: 16px;
+      box-shadow: 12px 12px 0 #000;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      overflow: hidden;
+      background: transparent;
+      margin: 0.5rem;
+    }
+    .button-content {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      z-index: 1;
+    }
+    .button:hover {
+      transform: translate(-6px, -6px);
+      box-shadow: 18px 18px 0 #000;
+    }
+    .button:active {
+      transform: translate(4px, 4px);
+      box-shadow: 8px 8px 0 #000;
+    }
+    /* Yes and No color variants */
+    .yes {
+      background: #f472b6;
+      color: #fff;
+    }
+    .no {
+      background: #4b5563;
+      color: #fff;
+    }
+    /* Default buttons */
+    .default {
+      background: #fff;
+      color: #000;
+    }
+
+    /* Gallery Section Buttons and Captions */
+    .gallery-caption .emoji {
+      transition: all 0.3s ease;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1100;
+      padding: max(var(--safe-area-inset-top), 20px) max(var(--safe-area-inset-right), 20px) max(var(--safe-area-inset-bottom), 20px) max(var(--safe-area-inset-left), 20px);
+      overflow-y: auto;
+    }
+
+    /* -------------------- Yay Modal Card Styles -------------------- */
+    :root {
+      --card-width: 480px;
+      --card-height: 660px;
+      --card-radius: 40px;
+    }
+    .yay-card {
+      position: relative;
+      width: var(--card-width);
+      height: var(--card-height);
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      /* High quality gradient using YES button color and purple with a hint of lavender */
+      background: linear-gradient(135deg, #f472b6, #9b59b6, #e6e6fa);
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 1px rgba(255,255,255,0.1);
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+      border: 4px solid #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Dynamic gradient element inside the yay modal */
+    .dynamic-gradient {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+      /* New gradient using fallback and radial gradient */
+      background: rgb(238,174,202);
+      background: radial-gradient(circle, rgba(238,174,202,1) 0%, rgba(148,187,233,1) 100%);
+      background-size: 200% 200%;
+      animation: gradientFlow 8s ease infinite;
+      opacity: 0.6;
+    }
+    /* Ensure modal content is above dynamic gradient */
+    .yay-card > *:not(.dynamic-gradient) {
+      position: relative;
+      z-index: 2;
+    }
+
+    .yay-image-container {
+      width: 300px;
+      aspect-ratio: 1 / 1;
+      margin: 5px auto 20px auto;
+      border: 4px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      z-index: 5;
+    }
+    .yay-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* New typewriter message element using DS Sans */
+    #typewriterMessage {
+      font-family: var(--font-ds);
+      font-size: 1.2em;
+      color: #fff;
+      margin: 20px 0;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      min-height: 1.2em;
+    }
+
+    /* Yay Modal Buttons Container at the bottom */
+    .yay-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: auto;
+      padding-top: 20px;
+    }
+    .close-button, .airbnb-button {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      background: #f472b6;
+      color: #fff;
+      border: 2px solid #000;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      box-shadow: 4px 4px 0 #000;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .close-button:hover, .airbnb-button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #000;
+    }
+    .close-button:active, .airbnb-button:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 #000;
+    }
+    /* Specific styling for the Return Home button (white background) */
+    #yayModalClose {
+      background: #fff;
+      color: #000;
+    }
+    #yayModalClose:hover, #yayModalClose:active {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 #000;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes fadeInModal {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    @keyframes subtleBounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+    /* Scroll down container */
+    .scroll-down-container {
+      text-align: center;
+      margin-bottom: 600px;
+    }
+    .scroll-down {
+      animation: scrollPulse 3.5s ease-in-out infinite;
+    }
+    @media (max-width: 1200px) {
+      .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 992px) {
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 768px) {
+      .gallery-section {
+        margin: 100px auto;
+        padding: 30px;
+        border-width: 3px;
+        box-shadow: 8px 8px 0 #000;
+      }
+      .gallery-grid {
+        gap: 20px;
+        padding: 10px;
+      }
+      .modal-photo-container {
+        height: 180px;
+      }
+      .container {
+        padding: 30px;
+        margin: 100px auto;
+        border-width: 3px;
+        box-shadow: 8px 8px 0 #000;
+      }
+      h1 {
+        font-size: clamp(2.5em, 8vw, 3.5em);
+        margin-bottom: 30px;
+      }
+      .message {
+        font-size: clamp(1.2em, 4vw, 1.5em);
+        margin-bottom: 30px;
+      }
+      .buttons {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        min-height: 100px;
+      }
+      .button {
+        font-size: 1.2rem;
+        min-width: 140px;
+        padding: 0.5rem 1rem;
+      }
+    }
+    @media (max-width: 480px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+      .gallery-item {
+        aspect-ratio: 1;
+      }
+    }
+    @media (pointer: coarse) {
+      .gallery-item:hover {
+        transform: none;
+        box-shadow: var(--box-shadow-card);
+      }
+      .gallery-item:hover .gallery-image {
+        transform: none;
+      }
+      .gallery-item:hover .gallery-caption {
+        color: #000;
+        transform: none;
+      }
+      .gallery-item:hover::before {
+        opacity: 0;
+      }
+    }
+
+    /* Box Heart Icon for Main Boxes */
+    .box-heart {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      color: var(--primary-color);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <!-- Time Counters -->
+  <div class="time-counter" id="dating-counter">
+    <svg class="heart-icon box-heart" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+    <span class="counter-label">Together Since</span>
+    <div class="time-values">
+      <div class="numbers">
+        <span id="dating-days">0</span>
+        <span id="dating-hours">0</span>
+      </div>
+      <div class="labels">
+        <span>Days</span>
+        <span>Hours</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="time-counter" id="valentine-counter">
+    <svg class="heart-icon box-heart" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+    <!-- Updated label -->
+    <span class="counter-label">Valentine's Clock</span>
+    <div class="time-values">
+      <div class="numbers">
+        <span id="valentine-days">0</span>
+        <span id="valentine-hours">0</span>
+      </div>
+      <div class="labels">
+        <span>Days</span>
+        <span>Hours</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Funny Message -->
+  <div class="funny-message" id="funnyMessage"></div>
+
+  <!-- Floating Elements -->
+  <div class="floating-elements" id="floatingElements"></div>
+
+  <!-- Confetti -->
+  <div class="confetti-container" id="confettiContainer"></div>
+
+  <!-- Custom Cursor -->
+  <div class="custom-cursor" id="customCursor">❄️</div>
+
+  <!-- Gallery Section -->
+  <section class="gallery-section">
+    <svg class="heart-icon box-heart" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+    <h2 class="gallery-title">Our Journey Together</h2>
+    <div class="gallery-grid">
+      <!-- Item 1: First Date -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/1.jpg" loading="lazy" alt="First Date" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">First Date</span> <span class="emoji">❤️</span></p>
+        </div>
+      </div>
+      <!-- Item 2: Second Date -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/2.jpg" loading="lazy" alt="Second Date" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">Second Date</span> <span class="emoji">💘</span></p>
+        </div>
+      </div>
+      <!-- Item 3: Made it Official -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/3.jpg" loading="lazy" alt="Made it Official" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">Made it Official</span> <span class="emoji">💍</span></p>
+        </div>
+      </div>
+      <!-- Item 4: Our Pet -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/4.jpg" loading="lazy" alt="Our Pet" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">Our Pet</span> <span class="emoji">🐾</span></p>
+        </div>
+      </div>
+      <!-- Item 5: Stoney River (Steak House) -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/5.jpg" loading="lazy" alt="Stoney River" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">Stoney River</span> <span class="emoji">🥩</span></p>
+        </div>
+      </div>
+      <!-- Item 6: Farm Cart (Burger Joint) -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/6.jpg" loading="lazy" alt="Farm Cart" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">Farm Cart</span> <span class="emoji">🍔</span></p>
+        </div>
+      </div>
+      <!-- Item 7: Road Trip -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/7.jpg" loading="lazy" alt="Road Trip" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">Road Trip</span> <span class="emoji">🚗</span></p>
+        </div>
+      </div>
+      <!-- Item 8: GT Parties -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/8.jpg" loading="lazy" alt="GT Parties" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">GT Parties</span> <span class="emoji">🎉</span></p>
+        </div>
+      </div>
+      <!-- Item 9: Christmas -->
+      <div class="gallery-item">
+        <div class="glass-overlay"></div>
+        <div class="gallery-frame">
+          <img src="images/9.jpg" loading="lazy" alt="Christmas" class="gallery-image" />
+          <p class="gallery-caption"><span class="caption-text">Christmas</span> <span class="emoji">🎄</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scroll Down Button -->
+  <div class="scroll-down-container">
+    <button id="scrollDownBtn" class="button default scroll-down" aria-label="Scroll Down">
+      <div class="button-content">
+        <span>Scroll Down</span>
+        <span class="icon">↓</span>
+      </div>
+    </button>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <svg class="heart-icon box-heart" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+    <h1>Will You Be My Valentine?</h1>
+    <p class="message">
+      From the moment we met, you've brought so much joy and love into my life.
+      I want to cherish every moment and memory we've made, so I made this website for you.
+      Will you be my Valentine?
+    </p>
+    <div class="buttons" style="display: flex; justify-content: center; gap: 30px;">
+      <button id="yesButton" class="button yes" aria-label="Yes">
+        <div class="button-content">
+          Yes <span class="icon">&lt;3</span>
+        </div>
+      </button>
+      <button id="noButton" class="button no" aria-label="No">
+        <div class="button-content">
+          No <span class="icon">:(</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Music Player -->
+  <div class="music-player" style="margin-bottom: 60px; text-align: center;">
+    <button id="playSongBtn" class="button default" aria-label="Play Our Song">
+      <div class="button-content">
+        <span>Play Our Song</span>
+        <span class="icon">♪</span>
+      </div>
+    </button>
+    <audio id="ourSong" src="our-song.mp3"></audio>
+  </div>
+
+  <!-- Gallery Modal -->
+  <div id="galleryModal" class="gallery-modal">
+    <div class="gallery-modal-content">
+      <span class="close-modal" id="galleryModalClose">×</span>
+      <img src="" alt="" class="gallery-modal-image" />
+      <p class="gallery-modal-caption"></p>
+    </div>
+  </div>
+
+  <!-- Success Modal (Yay Modal) -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="yayModalTitle" aria-describedby="yayModalDescription">
+    <div class="yay-card">
+      <!-- Dynamic gradient element inside the yay modal for a flowing effect optimized for mobile -->
+      <div class="dynamic-gradient"></div>
+      <!-- Tiny 'x' button placed symmetrically in the top right corner, just outside the border (visible only on mobile) -->
+      <button class="modal-close-x" id="yayModalX">×</button>
+      <!-- Updated title with ';)' instead of a heart emoji -->
+      <h2 id="yayModalTitle" style="font-family: 'Quicksand', sans-serif; font-weight: 700; color: #fff; font-size: clamp(1.5em, 4vw, 2em); text-align: center; margin-top: 10px;">
+        I knew you'd say yes ;)
+      </h2>
+      <!-- New image container with 1:1 ratio, centered, with a thicker white border, moved slightly upwards -->
+      <div class="yay-image-container">
+        <img src="images/photo1.jpg" alt="Special Moment" />
+      </div>
+      <!-- New typewriter message element using DS Sans -->
+      <p id="typewriterMessage"></p>
+      <!-- Yay modal buttons at the bottom -->
+      <div class="yay-buttons">
+        <a href="https://www.airbnb.com/s/Tennessee--United-States/homes?refinement_paths%5B%5D=%2Fhomes&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2025-03-01&monthly_length=3&monthly_end_date=2025-06-01&price_filter_input_type=0&channel=EXPLORE&query=Tennessee&place_id=ChIJA8-XniNLYYgRVpGBpcEgPgM&location_bb=QhK2iMKjSzZCC%2B6EwrSe%2BQ%3D%3D&date_picker_type=calendar&checkin=2025-03-29&checkout=2025-04-01&source=structured_search_input_header&search_type=autocomplete_click" class="button airbnb-button" target="_blank" rel="noopener">AirBnB Tennessee</a>
+        <button id="yayModalClose" class="button close-button">Return Home</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ------------------ NEW TYPEWRITER CLASS ------------------
+    class Typewriter {
+      /**
+       * Creates a new Typewriter instance.
+       * @param {HTMLElement} element - The DOM element where text will be typed.
+       * @param {Object} options - Configuration options.
+       *        options.typingSpeed: base delay in ms (default 75)
+       *        options.variance: additional random delay in ms (default 75)
+       */
+      constructor(element, options = {}) {
+        if (!element) {
+          throw new Error("Typewriter requires a valid DOM element.");
+        }
+        this.element = element;
+        this.typingSpeed = options.typingSpeed || 75;
+        this.variance = options.variance || 75;
+        this.text = "";
+        this.index = 0;
+        this.isTyping = false;
+        this.timeoutId = null;
+      }
+      /**
+       * Begins typing the provided text.
+       * @param {string} text - The text to type.
+       */
+      type(text) {
+        this.reset();
+        this.text = text;
+        this.isTyping = true;
+        this._typeNext();
+      }
+      _typeNext() {
+        if (!this.isTyping) return;
+        if (this.index < this.text.length) {
+          this.element.textContent += this.text.charAt(this.index);
+          this.index++;
+          const delay = this.typingSpeed + Math.random() * this.variance;
+          this.timeoutId = setTimeout(() => this._typeNext(), delay);
+        } else {
+          this.isTyping = false;
+        }
+      }
+      /**
+       * Resets the typewriter to its initial state.
+       */
+      reset() {
+        this.isTyping = false;
+        if (this.timeoutId) {
+          clearTimeout(this.timeoutId);
+          this.timeoutId = null;
+        }
+        this.index = 0;
+        this.element.textContent = "";
+      }
+    }
+
+    // Global variable to hold the current Typewriter instance
+    let twInstance = null;
+
+    // ------------------ OTHER SCRIPT LOGIC ------------------
+
+    // Witty messages when "No" tries to flee
+    const wittyMessages = [
+      "Intrigued yet?😉",
+      "Consider it briefly.😏",
+      "Plot twist: It's actually fun.😈",
+      "*Record scratch* Still unsure?🙄",
+      "Overthinking? Just feel it.😜",
+      "Action > Thinking.🔥",
+      "Angels *and* I say go for it.😇",
+      "Indulge a little. Live a little.😈",
+      "Sprinkles?😏",
+      "'No' is boring.🤫",
+      "Think 'DEFINITE'.😜",
+      "Worst choice🙃",
+      "No regrets later.😈",
+      "Regret-free zone now.😏",
+      "Ghost later, live now.😒",
+      "Good vibes.🌟",
+      "I made this for you...😢",
+      "You don't love me?🥺",
+      "You trynna say something??😭"
+    ];
+
+    class NoButtonHandler {
+      constructor(button, msg) {
+        this.button = button;
+        this.msg = msg;
+        this.isMoving = false;
+        this.messageTimeout = null;
+        this.moveTimeout = null;
+        this.pad = 20;
+
+        // Attach events robustly so that repeated triggers behave correctly
+        ["mouseover", "focus", "click", "touchstart"].forEach(evt => {
+          this.button.addEventListener(evt, (e) => {
+            e.preventDefault();
+            this.move();
+          });
+        });
+      }
+
+      move() {
+        if (this.isMoving || this.button.disabled) return;
+        this.isMoving = true;
+        const r = this.button.getBoundingClientRect();
+        // Convert to fixed positioning once "No" starts to run
+        if (this.button.style.position !== "fixed") {
+          this.button.style.position = "fixed";
+          this.button.style.top = r.top + "px";
+          this.button.style.left = r.left + "px";
+          this.button.style.margin = "0";
+        }
+        this.button.style.transition = "all 0.4s ease-out";
+        const n = this.newPos(r);
+        this.button.style.left = n.x + "px";
+        this.button.style.top = n.y + "px";
+        this.showMsg(n, r);
+        clearTimeout(this.moveTimeout);
+        this.moveTimeout = setTimeout(() => {
+          this.isMoving = false;
+        }, 400);
+      }
+
+      newPos(br) {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const sx = vw - br.width - this.pad;
+        const sy = vh - br.height - this.pad;
+        const cx = br.left;
+        const cy = br.top;
+        let nx, ny;
+        do {
+          nx = Math.min(Math.max(this.pad, Math.random() * sx), sx);
+          ny = Math.min(Math.max(this.pad, Math.random() * sy), sy);
+        } while (Math.abs(nx - cx) < 100 && Math.abs(ny - cy) < 100);
+        return { x: nx, y: ny };
+      }
+
+      showMsg(np, br) {
+        const msgTxt = wittyMessages[Math.floor(Math.random() * wittyMessages.length)];
+        this.msg.textContent = msgTxt;
+        this.msg.style.transition = "top 0.4s, left 0.4s, opacity 0.3s";
+        let mx = np.x + br.width / 2;
+        let my = np.y - 10;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const off = 20;
+        mx = Math.max(off, Math.min(mx, w - off));
+        my = Math.max(off, Math.min(my, h - off));
+        this.msg.style.left = mx + "px";
+        this.msg.style.top = my + "px";
+        this.msg.style.opacity = "1";
+        clearTimeout(this.messageTimeout);
+        this.messageTimeout = setTimeout(() => {
+          this.msg.style.opacity = "0";
+        }, 2000);
+      }
+
+      enable() {
+        this.button.disabled = false;
+        this.button.style.opacity = "1";
+        this.button.style.cursor = "pointer";
+        // Reset inline styles to ensure the button returns to its original size
+        this.button.style.position = "";
+        this.button.style.top = "";
+        this.button.style.left = "";
+        this.button.style.margin = "";
+      }
+
+      disable() {
+        this.button.disabled = true;
+        this.button.style.opacity = "0.5";
+        this.button.style.cursor = "not-allowed";
+      }
+    }
+
+    /* Floating Elements */
+    class FloatingElementsManager {
+      constructor(c) {
+        this.c = c;
+        this.emojis = ["✨", "❤️"];
+        this.max = 20;
+        this.int = null;
+      }
+      createEl() {
+        const el = document.createElement("div");
+        el.className = "floating-element";
+        el.textContent = this.emojis[Math.floor(Math.random() * this.emojis.length)];
+        el.style.left = `${Math.random() * 100}%`;
+        const sz = Math.random() * 20 + 20;
+        el.style.fontSize = `${sz}px`;
+        const d = Math.random() * 5 + 5;
+        el.style.animationDuration = d + "s";
+        this.c.appendChild(el);
+        setTimeout(() => {
+          if (el.parentNode === this.c) {
+            this.c.removeChild(el);
+          }
+        }, d * 1000);
+      }
+      start() {
+        for (let i = 0; i < this.max / 2; i++) {
+          this.createEl();
+        }
+        this.int = setInterval(() => {
+          if (this.c.childNodes.length < this.max) {
+            this.createEl();
+          }
+        }, 1000);
+      }
+      stop() {
+        if (this.int) clearInterval(this.int);
+        this.c.innerHTML = "";
+      }
+    }
+
+    /* Confetti Manager with varied rotation, explosion radius, and random rotation behavior */
+    class ConfettiManager {
+      constructor(co) {
+        this.co = co;
+        this.cv = document.createElement("canvas");
+        this.cv.style.width = "100%";
+        this.cv.style.height = "100%";
+        this.cv.style.display = "block";
+        this.cv.style.pointerEvents = "none";
+        this.co.appendChild(this.cv);
+        this.cx = this.cv.getContext("2d");
+        this.cs = [
+          "rgba(255,107,129,0.8)",
+          "rgba(214,164,231,0.8)",
+          "rgba(251,194,235,0.8)",
+          "rgba(161,140,209,0.8)",
+          "rgba(255,159,243,0.8)",
+          "rgba(254,202,87,0.8)",
+          "rgba(255,193,227,0.8)",
+          "rgba(253,228,207,0.8)"
+        ];
+        this.ps = [];
+        this.mp = 300;
+        this.g = 0.05;
+        this.d = 0.0005;
+        this.af = null;
+        this.resize();
+        window.addEventListener("resize", () => this.resize());
+      }
+      resize() {
+        this.cv.width = this.co.clientWidth;
+        this.cv.height = this.co.clientHeight;
+      }
+      upd() {
+        this.cx.clearRect(0, 0, this.cv.width, this.cv.height);
+        for (let i = 0; i < this.ps.length; i++) {
+          let p = this.ps[i];
+          p.vy += this.g;
+          p.vx *= 1 - this.d;
+          p.vy *= 1 - this.d;
+          p.x += p.vx;
+          p.y += p.vy;
+          // Update rotation if rotation speed is nonzero
+          p.r += p.rs;
+          this.drawP(p);
+          if (p.x < -100 || p.x > this.cv.width + 100 || p.y > this.cv.height + 100) {
+            this.ps.splice(i, 1);
+            i--;
+          }
+        }
+        if (this.ps.length > 0) {
+          this.af = requestAnimationFrame(() => this.upd());
+        } else {
+          this.af = null;
+        }
+      }
+      drawP(p) {
+        this.cx.save();
+        this.cx.translate(p.x, p.y);
+        this.cx.rotate(p.r);
+        this.cx.beginPath();
+        const s = p.sz;
+        this.cx.moveTo(0, 0);
+        this.cx.bezierCurveTo(-s / 2, -s / 2, -s, s / 4, 0, s);
+        this.cx.bezierCurveTo(s, s / 4, s / 2, -s / 2, 0, 0);
+        this.cx.closePath();
+        this.cx.fillStyle = p.cl;
+        this.cx.fill();
+        this.cx.restore();
+      }
+      burst(cx, cy, count, m = false) {
+        for (let i = 0; i < count; i++) {
+          if (this.ps.length >= this.mp) break;
+          const a = Math.random() * 2 * Math.PI;
+          // Vary explosion radius: 50% chance to use a smaller radius, 50% a larger one
+          const explosionRadius = Math.random() < 0.5 ? (Math.random() * 4 + 3) : (Math.random() * 8 + 5);
+          const vx = Math.cos(a) * explosionRadius;
+          const vy = Math.sin(a) * explosionRadius;
+          // Randomize size based on mode
+          const bs = m ? 8 : 12;
+          const sr = m ? 10 : 16;
+          // Randomly determine if this particle will rotate (70% chance) or be fixed (30% chance)
+          const rotateParticle = Math.random() < 0.7;
+          // Increase rotation speed slightly based on explosionRadius so that faster particles rotate more
+          const rotationSpeed = rotateParticle ? ((Math.random() - 0.5) * 0.1 * (explosionRadius / 5)) : 0;
+          this.ps.push({
+            x: cx,
+            y: cy,
+            vx,
+            vy,
+            sz: bs + Math.random() * sr,
+            cl: this.cs[Math.floor(Math.random() * this.cs.length)],
+            r: Math.random() * 2 * Math.PI, // random initial rotation
+            rs: rotationSpeed
+          });
+        }
+      }
+      spark(x, y) {
+        for (let i = 0; i < 8; i++) {
+          if (this.ps.length >= this.mp) break;
+          const a = Math.random() * 2 * Math.PI;
+          const sp = 1 + Math.random() * 2;
+          const vx = Math.cos(a) * sp;
+          const vy = Math.sin(a) * sp;
+          const rotateParticle = Math.random() < 0.7;
+          // Slightly increase rotation speed based on particle speed for spark particles as well
+          const rotationSpeed = rotateParticle ? ((Math.random() - 0.5) * 0.05 * (sp / 2)) : 0;
+          this.ps.push({
+            x,
+            y,
+            vx,
+            vy,
+            sz: 6 + Math.random() * 8,
+            cl: "rgba(255,255,255,0.9)",
+            r: Math.random() * 2 * Math.PI,
+            rs: rotationSpeed
+          });
+        }
+      }
+      launchShort(m) {
+        // Shorter confetti effect when YES is pressed
+        const tb = 3;
+        const cnt = m ? 15 : 25;
+        const intv = m ? 300 : 600;
+        for (let i = 0; i < tb; i++) {
+          setTimeout(() => {
+            const cx = this.cv.width * 0.2 + Math.random() * this.cv.width * 0.6;
+            const cy = this.cv.height * 0.2 + Math.random() * this.cv.height * 0.6;
+            this.burst(cx, cy, cnt, m);
+            this.spark(cx, cy);
+            if (!this.af) this.upd();
+          }, i * intv);
+        }
+      }
+      launchLong(m) {
+        // Longer confetti effect when the YAY modal is exited
+        const tb = 7;
+        const cnt = m ? 35 : 50;
+        const intv = m ? 400 : 900;
+        for (let i = 0; i < tb; i++) {
+          setTimeout(() => {
+            const cx = this.cv.width * 0.2 + Math.random() * this.cv.width * 0.6;
+            const cy = this.cv.height * 0.2 + Math.random() * this.cv.height * 0.6;
+            this.burst(cx, cy, cnt, m);
+            this.spark(cx, cy);
+            if (!this.af) this.upd();
+          }, i * intv);
+        }
+      }
+    }
+
+    // Unified modal close functionality for both WEB and MOBILE
+    function setupModalClose(modal, onCloseCallback) {
+      const closeButtons = modal.querySelectorAll(".close-modal, .close-button, .modal-close-x");
+      closeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          modal.style.display = "none";
+          if (onCloseCallback) onCloseCallback();
+        });
+      });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.style.display = "none";
+          if (onCloseCallback) onCloseCallback();
+        }
+      });
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modal.style.display === "flex") {
+          modal.style.display = "none";
+          if (onCloseCallback) onCloseCallback();
+        }
+      });
+    }
+
+    function updateDatingCounter() {
+      const start = new Date("2023-08-09");
+      const now = new Date();
+      const diff = now - start;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      document.getElementById("dating-days").textContent = days;
+      document.getElementById("dating-hours").textContent = hours;
+    }
+
+    function updateValentineCounter() {
+      const now = new Date();
+      let year = now.getFullYear();
+      const valentineThisYear = new Date(year, 1, 14);
+      if (now > valentineThisYear) {
+        year += 1;
+      }
+      const nextValentine = new Date(year, 1, 14);
+      const diff = nextValentine - now;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      document.getElementById("valentine-days").textContent = days;
+      document.getElementById("valentine-hours").textContent = hours;
+    }
+
+    function setupGalleryModal() {
+      const galleryModal = document.getElementById("galleryModal");
+      const modalImg = galleryModal.querySelector(".gallery-modal-image");
+      const modalCap = galleryModal.querySelector(".gallery-modal-caption");
+      const allButtons = document.querySelectorAll(".button");
+      const musicPlayer = document.querySelector(".music-player");
+      const timeCounters = document.querySelectorAll(".time-counter");
+      document.querySelectorAll(".gallery-item").forEach((item) => {
+        const img = item.querySelector(".gallery-image");
+        const caption = item.querySelector(".gallery-caption");
+        img.addEventListener("click", () => {
+          modalImg.src = img.src;
+          modalImg.alt = img.alt;
+          modalCap.textContent = caption.textContent;
+          galleryModal.style.display = "flex";
+          allButtons.forEach((b) => (b.style.display = "none"));
+          if (musicPlayer) musicPlayer.style.display = "none";
+          if (window.matchMedia("(max-width: 768px)").matches) {
+            timeCounters.forEach((tc) => (tc.style.display = "none"));
+          }
+        });
+      });
+      setupModalClose(galleryModal, () => {
+        allButtons.forEach((b) => (b.style.display = "inline-block"));
+        if (musicPlayer) musicPlayer.style.display = "block";
+        if (window.matchMedia("(max-width: 768px)").matches) {
+          timeCounters.forEach((tc) => (tc.style.display = "block"));
+        }
+      });
+    }
+
+    function setupYayModal() {
+      const yayModal = document.getElementById("modal");
+      const allButtons = document.querySelectorAll(".button");
+      const musicPlayer = document.querySelector(".music-player");
+      const timeCounters = document.querySelectorAll(".time-counter");
+      const typewriterElem = document.getElementById("typewriterMessage");
+      // Updated typewriter message with heart emoji appended at the end
+      const typewriterText = "Baby I can't believe this is our second Valentine's together, and thank you for NARA, muah muahh. You genuinely make me a better person, and I really can't imagine my life without you. I love you lots ❤️";
+      // When closing the modal, resetModal is called.
+      const resetModal = () => {
+        // Terminate any running typewriter logic
+        if (twInstance) {
+          twInstance.reset();
+          twInstance = null;
+        }
+        // On mobile, scroll back to the main container so it is centered (same as the scroll button)
+        if(window.matchMedia("(max-width: 768px)").matches){
+          setTimeout(() => {
+            document.querySelector(".container").scrollIntoView({ behavior:"smooth", block:"center" });
+          }, 200);
+        }
+        allButtons.forEach((b) => (b.style.display = "inline-block"));
+        if (musicPlayer) musicPlayer.style.display = "block";
+        if (window.matchMedia("(max-width: 768px)").matches) {
+          timeCounters.forEach((tc) => (tc.style.display = "block"));
+        }
+        // Trigger the longer confetti animation when the yay modal is closed
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        confetti.launchLong(isMobile);
+        pressedYes = false;
+        noBtnHandler.enable();
+        yesButton.disabled = false;
+        yesButton.focus();
+      };
+      setupModalClose(yayModal, resetModal);
+      // The typewriter animation will be triggered in showYayModal
+    }
+
+    function setupMusicPlayer() {
+      const playBtn = document.getElementById("playSongBtn");
+      const audio = document.getElementById("ourSong");
+      let playing = false;
+      playBtn.addEventListener("click", () => {
+        if (playing) {
+          audio.pause();
+          playBtn.querySelector("span").textContent = "Play Our Song";
+          playBtn.classList.remove("playing");
+        } else {
+          audio.play().catch((e) => console.log(e));
+          playBtn.querySelector("span").textContent = "Pause Our Song";
+          playBtn.classList.add("playing");
+        }
+        playing = !playing;
+      });
+      audio.addEventListener("ended", () => {
+        playing = false;
+        playBtn.querySelector("span").textContent = "Play Our Song";
+        playBtn.classList.remove("playing");
+      });
+    }
+
+    let pressedYes = false;
+    let noBtnHandler;
+    let yesButton;
+    let confetti;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const floatingManager = new FloatingElementsManager(document.getElementById("floatingElements"));
+      floatingManager.start();
+
+      noBtnHandler = new NoButtonHandler(document.getElementById("noButton"), document.getElementById("funnyMessage"));
+      yesButton = document.getElementById("yesButton");
+
+      confetti = new ConfettiManager(document.getElementById("confettiContainer"));
+
+      const timeCounters = document.querySelectorAll(".time-counter");
+      const allButtons = document.querySelectorAll(".button");
+      const musicPlayer = document.querySelector(".music-player");
+      const yayModal = document.getElementById("modal");
+
+      function showYayModal() {
+        yayModal.style.display = "flex";
+        if (window.matchMedia("(max-width: 768px)").matches) {
+          timeCounters.forEach((tc) => (tc.style.display = "none"));
+        }
+        // Use the new Typewriter class for a robust and faster typewriter animation
+        const typewriterElem = document.getElementById("typewriterMessage");
+        const typewriterText = "Baby I can't believe this is our second Valentine's together, and thank you for NARA, muah muahh. You genuinely make me a better person, and I really can't imagine my life without you. I love you lots ❤️";
+        // Create and store the instance so it can be reset on modal close
+        twInstance = new Typewriter(typewriterElem, { typingSpeed: 30, variance: 50 });
+        twInstance.type(typewriterText);
+      }
+
+      yesButton.addEventListener("click", () => {
+        // Trigger a shorter confetti burst when YES is pressed
+        const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        confetti.launchShort(isMobile);
+        showYayModal();
+        if (!pressedYes) {
+          pressedYes = true;
+          noBtnHandler.disable();
+          yesButton.disabled = true;
+          if (window.matchMedia("(max-width: 768px)").matches) {
+            allButtons.forEach((b) => (b.style.display = "none"));
+            if (musicPlayer) musicPlayer.style.display = "none";
+          }
+        }
+      });
+
+      setupGalleryModal();
+      setupYayModal();
+      setupMusicPlayer();
+
+      updateDatingCounter();
+      updateValentineCounter();
+      setInterval(() => {
+        updateDatingCounter();
+        updateValentineCounter();
+      }, 1000 * 60 * 5);
+
+      if (!window.matchMedia("(pointer: coarse)").matches) {
+        document.addEventListener("mousemove", (e) => {
+          const cursor = document.getElementById("customCursor");
+          if (cursor) {
+            cursor.style.left = e.clientX + "px";
+            cursor.style.top = e.clientY + "px";
+          }
+        });
+        yesButton.addEventListener("mouseenter", () => {
+          const cursor = document.getElementById("customCursor");
+          if (cursor) {
+            cursor.classList.add("hover-yes");
+          }
+        });
+        yesButton.addEventListener("mouseleave", () => {
+          const cursor = document.getElementById("customCursor");
+          if (cursor) {
+            cursor.classList.remove("hover-yes");
+          }
+        });
+      }
+
+      const scrollDownBtn = document.getElementById("scrollDownBtn");
+      if (scrollDownBtn) {
+        scrollDownBtn.addEventListener("click", () => {
+          document.querySelector(".container").scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      }
+    });
+  </script>
+</body>
+</html>
